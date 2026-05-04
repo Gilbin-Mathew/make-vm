@@ -7,8 +7,9 @@ QEMU := qemu-system-x86_64
 NAME := vm1
 FMT := qcow2
 IMG := $(NAME).$(FMT)
-ISO := ~/Downloads/archlinux-2026.03.01-x86_64.iso
+ISO := ~/Downloads/debian-live-12.11.0-amd64-gnome.iso
 MEM := 4096
+MACHINE := q35
 SIZE := 20
 
 # cpu
@@ -51,45 +52,51 @@ LOG := ./logs/
 ERRORLOGS := $(NAME).errors.log
 STATPATH := ./tmp/
 
-
-COMMON := $(QEMU) \
-		  -name $(NAME) \
+COMMON := -name $(NAME) \
 		  -pidfile $(STATPATH)$(NAME).pid \
+		  -machine $(MACHINE) \
 		  -enable-kvm \
-		  \
 		  -m $(MEM) \
 		  -smp $(SMP),sockets=$(SOCKETS),cores=$(CORES),threads=$(THREADS),maxcpus=$(MAXCPUS) \
 		  -cpu host \
 		  \
-		  -boot order=cd,menu=on\
-		  -drive if=pflash,file=$(LOADER),format=raw,readonly=on \
-		  -drive if=pflash,file=$(NVRAM),format=raw \
-		  -cdrom $(ISO) \
-		  \
-		  -drive file=$(NAME).qcow2,if=virtio,format=qcow2 \
-		  \
-		  -display gtk \
-		  -vga std \
-		  \
-		  -netdev tap,id=$(TAPDEVID),ifname=$(NETIFACE),script=no,downscript=no,vhost=on\
-		  -device $(ENETDEV),netdev=$(TAPDEVID),mac=$(MACADDR) \
+		  -drive file=$(NAME).qcow2,if=none,format=qcow2,id=disk0 \
+		  -device virtio-blk-pci,drive=disk0 \
 		  \
 		  -D $(LOG)$(ERRORLOGS) \
 		  -d guest_errors,mmu,invalid_mem,cpu,op \
-		  \
-		  -daemonize 
 
-.PHONY: run setup-net vm3.qcow2
+
+WITHAUDIO := -audiodev pipewire,id=snd0 \
+			 -device ich9-intel-hda \
+			 -device hda-output,audiodev=snd0 \
+
+WITHBOOT := -boot order=cd,menu=on \
+			-drive if=pflash,file=$(LOADER),format=raw,readonly=on \
+			-drive if=pflash,file=$(NVRAM),format=raw \
+			\
+			-device virtio-scsi,id=scsi0 \
+			-drive file=$(ISO),media=cdrom,if=none,id=cd0 \
+			-device scsi-cd,drive=cd0 \
+
+
+WITHGRAPHICS := -display spice-app,gl=on \
+				-vga qxl \
+	
+WITHNET := -netdev tap,id=$(TAPDEVID),ifname=$(NETIFACE),script=no,downscript=no,vhost=on,queues=$(QUE) \
+		   -device $(ENETDEV),netdev=$(TAPDEVID),mac=$(MACADDR),mq=on,vectors=$(VEC) \
+
+.PHONY: run setup-host-net delete-host-net create-host-net
 
 #made as a target to make sure it dosen't gets overridden, name the target same as the vm
 #could have created a bash script, but i hate to do that
 vm1.qcow2:
 	@qemu-img create --format $(FMT) $(NAME).qcow2 $(SIZE)G
 
-run:vm1.qcow2 setup-host-net
-	$(COMMON)
+run:setup-host-net
+	$(QEMU) $(COMMON) $(WITHBOOT) $(WITHGRAPHICS) $(WITHNET) $(WITHAUDIO)
 
-kill:
+kill:$(STATPATH)$(NAME).pid
 	@kill -9 $$(cat $(STATPATH)$(NAME).pid)
 	@rm $(STATPATH)$(NAME).pid
 
