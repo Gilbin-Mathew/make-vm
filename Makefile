@@ -1,9 +1,11 @@
 SHELL = /bin/bash
-# system
+# Work area
+
+## system
 QEMU := qemu-system-x86_64
 
-# virtual machine
-##give the first make target as the name and format as disk
+## virtual machine
+#give the first make target as the name and format as disk
 NAME := vm1
 FMT := qcow2
 IMG := $(NAME).$(FMT)
@@ -12,33 +14,33 @@ MEM := 4096
 MACHINE := q35
 SIZE := 20
 
-# cpu
+## cpu
 SMP := 4
 SOCKETS := 1
 CORES := 4
 THREADS := 1
 MAXCPUS := 4
 
-# firmware
-##uefi by default, ""delete the lines of loader and nvram for bios""
+## firmware
+#uefi by default, ""delete the lines of loader and nvram for bios""
 UEFIPATH := ./UEFI/
 LOADER := $(UEFIPATH)OVMF_CODE.fd
 NVRAM := $(UEFIPATH)OVMF_VARS.fd
 
 
-# networking
-## hostside networking
+## networking
+### hostside networking
 NETIFACE := tap0
 NETBRIDGE := br0
 NETPATH := ./networks/
 SUBNET := 24
 GATEADDR := 10.10.10.1 
 
-## guestside network
+### guestside network
 TAPDEVID := net0
 MACADDR := 52:54:00:12:34:56
-# mac address, the vendor specific 3 bytes should be 52:54:00:XX:XX:XX
-# rest 3 bytes should could be altered in hex renge from 1 - F
+#mac address, the vendor specific 3 bytes should be 52:54:00:XX:XX:XX
+#rest 3 bytes should could be altered in hex renge from 1 - F
 
 #emulated network device or device
 ENETDEV := virtio-net
@@ -47,10 +49,12 @@ ENETDEV := virtio-net
 QUE := 1
 VEC := 4
 
-# logs
+## logs
 LOG := ./logs/
 ERRORLOGS := $(NAME).errors.log
 STATPATH := ./tmp/
+
+# Cook area
 
 COMMON := -name $(NAME) \
 		  -pidfile $(STATPATH)$(NAME).pid \
