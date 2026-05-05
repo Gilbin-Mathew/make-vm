@@ -9,7 +9,7 @@ QEMU := qemu-system-x86_64
 NAME := vm1
 FMT := qcow2
 IMG := $(NAME).$(FMT)
-ISO := ~/Downloads/debian-live-12.11.0-amd64-gnome.iso
+ISO := ~/Downloads/path/to/iso
 MEM := 4096
 MACHINE := q35
 SIZE := 20
@@ -108,7 +108,7 @@ WITHNET := -netdev tap,id=$(TAPDEVID),ifname=$(NETIFACE),script=no,downscript=no
 
 #WITHPCIPASSDEV := 
 #WITHUSBPASSDEV := -device qemu-xhci,id=usb0 \
-#				  -device usb-host,bus=usb0.0,port=1,vendorid=0x346d,productid=0x5678,hostbus=2,hostaddr=6 \
+#				  -device usb-host,bus=usb0.0,port=1,vendorid=0xXXXX,productid=0xXXXX,hostbus=0,hostaddr=0 \
 
 # just taking rest for a while, I'm continuing it later
 
