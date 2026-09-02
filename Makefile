@@ -9,7 +9,7 @@ QEMU := qemu-system-x86_64
 NAME := vm1
 FMT := qcow2
 IMG := $(NAME).$(FMT)
-ISO := ~/Downloads/path/to/iso
+ISO := /home/asus/Downloads/linuxmint-22.3-cinnamon-64bit.iso
 MEM := 4096
 MACHINE := q35
 SIZE := 20
@@ -75,7 +75,7 @@ COMMON := -name $(NAME) \
 		  -device scsi-hd,drive=disk0,bus=scsi0.0 \
 		  \
 		  -D $(LOG)$(ERRORLOGS) \
-		  -d guest_errors,mmu,invalid_mem,cpu,op \
+		  -d guest_errors \
 
 #audio devices for the vm first device is a controller device next is the audio output device
 WITHAUDIO := -audiodev pipewire,id=snd0 \
@@ -112,18 +112,24 @@ WITHNET := -netdev tap,id=$(TAPDEVID),ifname=$(NETIFACE),script=no,downscript=no
 
 # just taking rest for a while, I'm continuing it later
 
-.PHONY: run run-all setup-host-net delete-host-net create-host-net connect-nbd mount-nbd
+.PHONY: run run-all setup-host-net delete-host-net create-host-net connect-nbd mount-nbd log
 
 #name made as a target to make sure it dosen't gets overridden, name the target same as the vm name and format.
 #could have created a bash script, but i hate to do that
+
 vm1.qcow2:
-	@qemu-img create --format $(FMT) $(NAME).qcow2 $(SIZE)G
+	@qemu-img create -f $(FMT) $(NAME).qcow2 $(SIZE)G
 
 run:
 	$(QEMU) $(COMMON) $(WITHBOOT)
 
 run-all:setup-host-net
-	$(QEMU) $(COMMON) $(WITHBOOT) $(WITHGRAPHICS) $(WITHNET) $(WITHAUDIO) $(WITHIODEV)
+	$(QEMU) $(COMMON) $(WITHBOOT) $(WITHNET) #$(WITHAUDIO) $(WITHIODEV) $(WITHGRAPHICS)
+
+log:
+	@mkdir logs tmp
+	@touch $(LOG)$(ERRORLOGS)
+	@touch $(STATPATH)$(NAME).pid
 
 kill:$(STATPATH)$(NAME).pid
 	@kill -9 $$(cat $(STATPATH)$(NAME).pid)
